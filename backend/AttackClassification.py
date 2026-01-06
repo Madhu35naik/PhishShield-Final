@@ -1,331 +1,68 @@
+# AttackClassification.py
 """
-Enhanced Attack Classification & Prevention System
-Educational Version with Advanced Features
+Complete Attack Classification & Prevention System
+HYBRID: Rule-Based + Feature-Based Detection
+Full Prevention & Educational Content Database
 """
 
 from FeatureExtraction import feature_names
 from datetime import datetime
 
+# Import rule-based detection
+try:
+    from DetectionRB import classify_by_rules
+    RULES_AVAILABLE = True
+    print("✅ detection loaded successfully")
+except ImportError:
+    RULES_AVAILABLE = False
+    print("⚠️ RuleBasedDetection.py not found - using feature-based only")
+
+
 # ===============================
-# ATTACK TYPE CLASSIFICATION
+# FEATURE-BASED CLASSIFICATION
 # ===============================
 
-def classify_attack_type(features):
-    """
-    Classify PRIMARY attack type with detailed technical explanation.
-    """
+def classify_attack_type_by_features(features):
+    """Feature-based classification (fallback)"""
     if not isinstance(features, (list, tuple)) or len(features) < len(feature_names):
         return ["INVALID_FEATURES"]
 
     feature_dict = dict(zip(feature_names, features))
     
-    # Priority-based detection
-    suspicious_count = sum([
-        feature_dict['Have_IP'],
-        feature_dict['TinyURL'],
-        feature_dict['Prefix/Suffix'],
-        feature_dict['https_Domain'],
-        feature_dict['Redirection'],
-        feature_dict['Domain_Age'],
-        feature_dict['DNS_Record'],
-        feature_dict['iFrame']
-    ])
-    
-    if suspicious_count >= 5:
-        return ['SOPHISTICATED_MULTI_VECTOR_ATTACK']
-    if feature_dict['Have_IP']:
+    # Priority 1: IP-based
+    if feature_dict.get('Have_IP', 0) == 1:
         return ['IP_BASED_PHISHING']
-    if feature_dict['Prefix/Suffix']:
-        return ['TYPOSQUATTING_HOMOGRAPH']
-    if feature_dict['https_Domain']:
-        return ['DOMAIN_SPOOFING']
-    if feature_dict['iFrame']:
-        return ['IFRAME_OVERLAY_PHISHING']
-    if feature_dict['DNS_Record']:
-        return ['DNS_ANOMALY_PHISHING']
-    if feature_dict['Redirection']:
-        return ['OPEN_REDIRECT_PHISHING']
-    if feature_dict['TinyURL']:
+    
+    # Priority 2: URL Shorteners
+    if feature_dict.get('TinyURL', 0) == 1:
         return ['URL_SHORTENER_PHISHING']
-    if feature_dict['Domain_Age']:
+    
+    # Priority 3: iFrame
+    if feature_dict.get('iFrame', 0) == 1:
+        return ['IFRAME_OVERLAY_PHISHING']
+    
+    # Priority 4: Typosquatting
+    if feature_dict.get('Prefix/Suffix', 0) == 1:
+        return ['TYPOSQUATTING_HOMOGRAPH']
+    
+    # Priority 5: Fake security
+    if feature_dict.get('https_Domain', 0) == 1:
+        return ['FAKE_SECURITY_INDICATOR']
+    
+    # Priority 6: Redirects
+    if feature_dict.get('Redirection', 0) == 1:
+        return ['OPEN_REDIRECT_PHISHING']
+    
+    # Priority 7: Domain age/DNS
+    if feature_dict.get('DNS_Record', 0) == 1 or feature_dict.get('Domain_Age', 0) == 1:
         return ['NEW_DOMAIN_PHISHING']
-    if feature_dict['Mouse_Over'] or feature_dict['Right_Click']:
+    
+    # Priority 8: Social engineering
+    if feature_dict.get('Mouse_Over', 0) == 1 or feature_dict.get('Right_Click', 0) == 1:
         return ['SOCIAL_ENGINEERING_PHISHING']
     
-    return ['GENERAL_PHISHING']
-
-
-# ===============================
-# ENHANCED PREVENTION DATABASE
-# ===============================
-
-ENHANCED_PREVENTION = {
-    'IP_BASED_PHISHING': {
-        'severity': 'HIGH',
-        'risk_score': 85,
-        'warning': '🛑 IP-Based URL Detected!',
-        
-        # Technical Explanation (Educational)
-        'technical_details': {
-            'description': 'The URL uses a raw IP address instead of a domain name. Legitimate websites always use proper domain names (e.g., amazon.com) rather than IP addresses.',
-            'why_dangerous': 'Attackers use IP addresses to avoid domain registration tracking and to quickly set up phishing sites that bypass domain-based security filters.',
-            'common_targets': ['Banking sites', 'E-commerce platforms', 'Corporate login portals'],
-            'attack_vector': 'Direct IP access bypasses DNS-based security measures and domain reputation systems.'
-        },
-        
-        # User-Friendly Advice
-        'advice': [
-            'Never enter login credentials on IP-based URLs',
-            'Legitimate websites use proper domain names, not raw IP addresses',
-            'Close this page immediately and verify the correct website URL',
-            'Report this URL to your IT security team'
-        ],
-        
-        # Educational Content
-        'how_to_identify': [
-            'Look for numbers separated by dots in the URL (e.g., 192.168.1.1)',
-            'Check if the address bar shows an IP instead of a domain name',
-            'Legitimate sites will always have a readable domain (e.g., google.com)'
-        ],
-        
-        # Real-World Examples
-        'real_examples': [
-            'http://203.0.113.45/paypal-login',
-            'https://198.51.100.10/secure-banking',
-            'http://192.168.1.1/verify-account'
-        ],
-        
-        # Prevention Techniques
-        'prevention_techniques': [
-            'Use browser extensions that flag IP-based URLs',
-            'Enable DNS filtering on your network',
-            'Always access websites through bookmarks or search engines',
-            'Train employees to recognize IP addresses in URLs'
-        ],
-        
-        # Incident Response
-        'if_clicked': [
-            'Immediately close the browser tab/window',
-            'Do not enter any information',
-            'Clear browser cache and cookies',
-            'Run a security scan on your device',
-            'Report to IT security if received via corporate email',
-            'Change passwords if you entered any credentials'
-        ]
-    },
-    
-    'URL_SHORTENER_PHISHING': {
-        'severity': 'MEDIUM',
-        'risk_score': 60,
-        'warning': '⚠️ URL Shortener Detected',
-        
-        'technical_details': {
-            'description': 'The URL uses a link shortening service (like bit.ly, tinyurl.com) that hides the true destination.',
-            'why_dangerous': 'Shortened URLs obscure the real destination, making it impossible to verify legitimacy before clicking. Attackers exploit this to hide malicious links.',
-            'common_targets': ['Social media users', 'Email recipients', 'SMS/messaging platforms'],
-            'attack_vector': 'Social engineering through trusted-looking short links that redirect to phishing pages.'
-        },
-        
-        'advice': [
-            'Use URL expander tools (like unshorten.it) to see the real destination',
-            'Never click shortened links from unknown sources or suspicious emails',
-            'Verify the sender before clicking any shortened URL',
-            'Be extra cautious with shortened links asking for login or payment info'
-        ],
-        
-        'how_to_identify': [
-            'Look for domains like bit.ly, tinyurl.com, goo.gl, t.co',
-            'URLs are typically very short (fewer than 20 characters)',
-            'Contains random characters after the domain (e.g., bit.ly/xK9m2q)'
-        ],
-        
-        'real_examples': [
-            'http://bit.ly/3xK9mPq',
-            'http://tinyurl.com/malicious123',
-            'https://t.co/suspicious'
-        ],
-        
-        'prevention_techniques': [
-            'Install browser extensions that preview shortened URLs',
-            'Use URL expander websites before clicking',
-            'Check sender reputation before clicking',
-            'Educate users about shortened URL risks'
-        ],
-        
-        'if_clicked': [
-            'Check where you landed - verify the domain',
-            'Do not proceed if the destination looks suspicious',
-            'Close the page if it asks for personal information',
-            'Report the shortened URL to the service provider'
-        ]
-    },
-    
-    'TYPOSQUATTING_HOMOGRAPH': {
-        'severity': 'CRITICAL',
-        'risk_score': 95,
-        'warning': '🚨 Brand Impersonation Detected',
-        
-        'technical_details': {
-            'description': 'The domain name closely resembles a legitimate brand by using typos, extra characters, or similar-looking characters (homograph attack).',
-            'why_dangerous': 'Users may not notice subtle differences and believe they\'re on the legitimate website, leading to credential theft or malware installation.',
-            'common_targets': ['Banking sites', 'Payment processors', 'Popular brands', 'Government websites'],
-            'attack_vector': 'Visual deception through domain names that look nearly identical to legitimate brands.'
-        },
-        
-        'advice': [
-            'Carefully check the domain spelling - it may look similar to a legitimate brand',
-            'Look for unusual characters, extra dashes, or misspellings',
-            'Compare with the official website URL from search engine or bookmarks',
-            'Do NOT enter any personal information, passwords, or payment details',
-            'Report this to the brand being impersonated'
-        ],
-        
-        'how_to_identify': [
-            'Extra dashes or hyphens (paypal-secure.com instead of paypal.com)',
-            'Additional words (amazon-login.com instead of amazon.com)',
-            'Misspellings (microsft.com instead of microsoft.com)',
-            'Similar-looking characters (goog1e.com using "1" instead of "l")',
-            'Different top-level domain (paypal.net instead of paypal.com)'
-        ],
-        
-        'real_examples': [
-            'paypal-secure-login.com (real: paypal.com)',
-            'amazon-verify-account.com (real: amazon.com)',
-            'microsoft-support.net (real: microsoft.com)',
-            'app1e.com (real: apple.com - note the "1" instead of "l")'
-        ],
-        
-        'prevention_techniques': [
-            'Always use bookmarks for important websites',
-            'Type URLs directly instead of clicking links',
-            'Use password managers that auto-fill only on correct domains',
-            'Enable browser warnings for suspicious domains',
-            'Check SSL certificates for domain validation'
-        ],
-        
-        'if_clicked': [
-            '🚨 CRITICAL: Do not enter any information',
-            'Close the page immediately',
-            'Clear browser cache',
-            'Report to the legitimate brand\'s security team',
-            'If credentials entered: IMMEDIATELY change passwords',
-            'Monitor accounts for unauthorized activity',
-            'Consider credit monitoring if financial info was entered'
-        ]
-    },
-    
-    'SOPHISTICATED_MULTI_VECTOR_ATTACK': {
-        'severity': 'CRITICAL',
-        'risk_score': 100,
-        'warning': '☢️ ADVANCED ATTACK DETECTED',
-        
-        'technical_details': {
-            'description': 'This URL exhibits 5 or more suspicious indicators simultaneously, suggesting a sophisticated, well-crafted phishing campaign.',
-            'why_dangerous': 'Multi-vector attacks combine multiple techniques to bypass security measures and increase success rate. Often part of advanced persistent threats (APT).',
-            'common_targets': ['High-value targets', 'Corporate executives', 'Financial institutions', 'Government agencies'],
-            'attack_vector': 'Layered approach using multiple evasion and deception techniques simultaneously.'
-        },
-        
-        'advice': [
-            '🚨 CRITICAL: This URL shows 5+ phishing indicators simultaneously',
-            'This is a sophisticated, well-crafted phishing attack',
-            'IMMEDIATELY close this page - do not interact with it',
-            'Clear your browser cache and run an antivirus scan',
-            'Report this to your IT security/incident response team urgently',
-            'Do NOT enter any information under any circumstances'
-        ],
-        
-        'how_to_identify': [
-            'Multiple red flags present (IP address + shortener + fake SSL, etc.)',
-            'Combines techniques from different attack categories',
-            'Often uses social engineering alongside technical exploits',
-            'May appear more legitimate due to effort invested'
-        ],
-        
-        'real_examples': [
-            'http://192.168.1.1/paypal-secure/bit.ly/verify (IP + typosquatting + shortener)',
-            'http://https-bank-login.com//redirect (domain spoofing + redirection)',
-        ],
-        
-        'prevention_techniques': [
-            'Deploy multi-layered security (email filters + web filters + endpoint protection)',
-            'Implement security awareness training',
-            'Use threat intelligence feeds',
-            'Enable advanced email authentication (DMARC, SPF, DKIM)',
-            'Conduct regular phishing simulation exercises'
-        ],
-        
-        'if_clicked': [
-            '⚠️ IMMEDIATE ACTIONS REQUIRED:',
-            '1. Disconnect from network immediately',
-            '2. Do not enter any information',
-            '3. Run full system antivirus/malware scan',
-            '4. Contact IT security team immediately',
-            '5. Document the incident (take screenshots)',
-            '6. If credentials entered: Force password reset on all accounts',
-            '7. Monitor for unauthorized access attempts',
-            '8. Consider engaging incident response team',
-            '9. File incident report with relevant authorities'
-        ]
-    },
-    
-    'LEGITIMATE': {
-        'severity': 'LOW',
-        'risk_score': 0,
-        'warning': '✅ Site Appears Safe',
-        
-        'technical_details': {
-            'description': 'This URL passed security checks and exhibits characteristics of a legitimate website.',
-            'why_safe': 'URL structure follows best practices, domain has proper registration, and no suspicious patterns detected.',
-            'confidence_note': 'While this URL appears safe, always verify you\'re on the correct domain.'
-        },
-        
-        'advice': [
-            'This URL passed security checks and appears legitimate',
-            'Always verify you\'re on the correct domain before entering sensitive info',
-            'Look for HTTPS and a valid SSL certificate (padlock icon)',
-            'Stay vigilant - even legitimate sites can be compromised',
-            'Never share passwords or financial information unless absolutely certain'
-        ],
-        
-        'how_to_identify': [
-            'Well-known, established domain name',
-            'Proper HTTPS with valid SSL certificate',
-            'No suspicious characters or patterns in URL',
-            'Matches official domain from search engines'
-        ],
-        
-        'best_practices': [
-            'Always use two-factor authentication (2FA) when available',
-            'Use unique, strong passwords for each site',
-            'Keep browser and security software updated',
-            'Verify SSL certificate details before entering sensitive data',
-            'Use official mobile apps when possible',
-            'Enable account activity notifications'
-        ]
-    }
-}
-
-
-# ===============================
-# RISK SCORING SYSTEM
-# ===============================
-
-def calculate_risk_score(features, attack_types):
-    """
-    Calculate numerical risk score (0-100) based on features and attack types.
-    """
-    base_score = 0
-    
-    # Get base score from attack type
-    for attack in attack_types:
-        info = ENHANCED_PREVENTION.get(attack, {})
-        attack_score = info.get('risk_score', 50)
-        base_score = max(base_score, attack_score)
-    
-    # Adjust based on feature count
-    feature_dict = dict(zip(feature_names, features))
-    suspicious_features = sum([
+    # Multi-vector detection
+    suspicious_count = sum([
         feature_dict.get('Have_IP', 0),
         feature_dict.get('TinyURL', 0),
         feature_dict.get('Prefix/Suffix', 0),
@@ -336,120 +73,684 @@ def calculate_risk_score(features, attack_types):
         feature_dict.get('iFrame', 0)
     ])
     
-    # Add bonus risk for multiple suspicious features
-    if suspicious_features >= 3:
-        base_score = min(100, base_score + (suspicious_features - 2) * 5)
+    if suspicious_count >= 3:
+        return ['SOPHISTICATED_MULTI_VECTOR_ATTACK']
     
-    return base_score
+    return ['GENERAL_PHISHING']
 
 
 # ===============================
-# EDUCATIONAL CONTENT GENERATOR
+# HYBRID CLASSIFICATION
 # ===============================
+
+def classify_attack_type(features, url=None):
+    """
+    HYBRID classification: Rules first, then features
+    """
+    # Try rule-based first
+    if url and RULES_AVAILABLE:
+        attack_type, confidence, details = classify_by_rules(url)
+        if attack_type:
+            print(f"✓ Rule-based: {attack_type} ({confidence}%)")
+            return [attack_type]
+    
+    # Fallback to feature-based
+    return classify_attack_type_by_features(features)
+
+
+# ===============================
+# COMPLETE PREVENTION DATABASE
+# ===============================
+
+ENHANCED_PREVENTION = {
+    
+    'IP_BASED_PHISHING': {
+        'severity': 'HIGH',
+        'risk_score': 85,
+        'warning': '🛑 IP Address Detected in URL - High Risk!',
+        
+        'technical_details': {
+            'description': 'The URL uses a raw IP address (e.g., 192.168.1.1) instead of a proper domain name. Legitimate websites always use registered domain names.',
+            'why_dangerous': 'Attackers use IP addresses to evade domain-based security filters, avoid domain registration costs, hide ownership details, and bypass reputation systems.',
+            'common_targets': 'Banking portals, e-commerce sites, corporate SSO, cloud services, email providers',
+            'attack_vector': 'Direct IP access bypasses DNS filtering and traditional URL analysis.',
+            'prevalence': '8-12% of phishing attacks use IP addresses'
+        },
+        
+        'advice': [
+            '🚫 NEVER enter credentials on IP-based URLs',
+            '✅ Legitimate services ALWAYS use domain names (example.com)',
+            '⚠️ Close page immediately without clicking anything',
+            '📧 Mark as phishing if received via email',
+            '🔒 Access services through official domains only',
+            '🛡️ Enable two-factor authentication on all accounts'
+        ],
+        
+        'how_to_identify': [
+            'URL contains numbers and dots: http://203.0.113.45/login',
+            'Format like http://192.168.1.1 or https://10.0.0.5',
+            'Often uses HTTP instead of HTTPS',
+            'Browser shows "Not Secure" warning',
+            'No recognizable company name in address'
+        ],
+        
+        'real_examples': [
+            'http://203.0.113.45/paypal-login/verify',
+            'https://198.51.100.10/chase-banking/secure',
+            'http://192.168.1.1/microsoft-account',
+            'https://172.16.254.1/amazon-payment'
+        ],
+        
+        'prevention_techniques': [
+            'Deploy DNS filtering to block IP access',
+            'Use browser extensions that warn about IPs',
+            'Configure email gateways to flag IP links',
+            'Train users: "Numbers and dots = danger"',
+            'Implement web proxy IP blocking rules'
+        ],
+        
+        'if_clicked': [
+            '1. Close browser tab immediately (Ctrl+W)',
+            '2. DO NOT interact with page elements',
+            '3. Clear browser cache and cookies',
+            '4. Run antivirus scan',
+            '5. If credentials entered: Change passwords IMMEDIATELY',
+            '6. Enable 2FA if not already active',
+            '7. Monitor accounts for unauthorized access',
+            '8. Report to IT security with URL and timestamp'
+        ]
+    },
+    
+    'TYPOSQUATTING_HOMOGRAPH': {
+        'severity': 'CRITICAL',
+        'risk_score': 95,
+        'warning': '🚨 Brand Impersonation Detected - Critical!',
+        
+        'technical_details': {
+            'description': 'Domain mimics legitimate brands using character substitutions (paypa1.com) or visually similar characters from different alphabets.',
+            'why_dangerous': 'Extremely effective - users see familiar brands and miss subtle differences. 45% click-through rate.',
+            'common_targets': 'Banks, tech companies (Google, Microsoft), payment processors (PayPal, Stripe), social media',
+            'attack_vector': 'Visual deception exploiting reading patterns and brand trust.',
+            'prevalence': '30-40% of all phishing attacks'
+        },
+        
+        'advice': [
+            '🚨 CRITICAL: This is NOT the official website',
+            '🔍 Examine EACH character in domain name carefully',
+            '⚠️ Look for: I vs l, 0 vs O, rn vs m',
+            '🔖 Always use bookmarks or direct search',
+            '🛡️ Use password managers - they detect mismatches',
+            '📱 Report to real company\'s abuse team'
+        ],
+        
+        'how_to_identify': [
+            'Character swaps: paypa1.com (1→l), micr0soft.com (0→o)',
+            'Letter combos: arnazon.com (rn→m)',
+            'Extra hyphens: paypal-secure.com',
+            'Wrong TLD: paypal.net instead of .com',
+            'Added prefixes: secure-apple.com',
+            'Homographs: аррӏе.com (Cyrillic letters)'
+        ],
+        
+        'real_examples': [
+            'paypa1.com (reported 2,500+ times)',
+            'arnazon.com (major 2018 campaign)',
+            'micros0ft.com (active phishing)',
+            'faceb00k.com (zeros for o\'s)',
+            'g00gle-login.com'
+        ],
+        
+        'prevention_techniques': [
+            'Use password managers (auto-fill only on correct domains)',
+            'Enable browser homograph protection',
+            'Deploy DNS security with brand protection',
+            'Implement email filtering for lookalikes',
+            'Bookmark official sites - never type manually',
+            'Train users with real examples'
+        ],
+        
+        'if_clicked': [
+            '🚨 DO NOT ENTER ANY INFORMATION',
+            '1. Close page using keyboard (Ctrl+W)',
+            '2. Take screenshot for reporting',
+            '3. Clear all browser data',
+            '4. If credentials entered:',
+            '   a. Change password IMMEDIATELY on official site',
+            '   b. Enable 2FA urgently',
+            '   c. Check account activity',
+            '   d. Monitor for suspicious transactions',
+            '5. If financial info entered: Contact bank immediately',
+            '6. Report to brand\'s abuse team',
+            '7. File report with Anti-Phishing Working Group'
+        ]
+    },
+    
+    'URL_SHORTENER_PHISHING': {
+        'severity': 'MEDIUM',
+        'risk_score': 60,
+        'warning': '⚠️ URL Shortener Detected - Hidden Destination',
+        
+        'technical_details': {
+            'description': 'Uses link shortening services (bit.ly, tinyurl.com) to hide true destination.',
+            'why_dangerous': 'Prevents evaluation before clicking, bypasses URL blacklists, enables tracking.',
+            'common_targets': 'Social media users, SMS recipients, email campaigns',
+            'attack_vector': 'Social engineering with URL obfuscation.',
+            'prevalence': '15-20% of phishing campaigns'
+        },
+        
+        'advice': [
+            '⚠️ Never click shortened links in unsolicited messages',
+            '🔍 Use URL expander tools (CheckShortURL.com)',
+            '✉️ Verify sender through alternative channels',
+            '🛡️ Use browser extensions that auto-expand URLs',
+            '📱 Be extra cautious with urgent language'
+        ],
+        
+        'how_to_identify': [
+            'Domains: bit.ly, tinyurl.com, goo.gl, t.co',
+            'Short random strings: bit.ly/3xK9mPq',
+            'In unsolicited messages',
+            'Combined with urgency: "Click now!"',
+            'No destination preview'
+        ],
+        
+        'real_examples': [
+            'http://bit.ly/3xK9mPq → fake Microsoft login',
+            'https://tinyurl.com/paypal-verify',
+            'http://t.co/abc123 → credential harvester'
+        ],
+        
+        'prevention_techniques': [
+            'Deploy filtering that expands shortened URLs',
+            'Use security tools following redirect chains',
+            'Block high-risk shortener domains',
+            'Implement time-of-click protection',
+            'Train users to verify shortened URLs'
+        ],
+        
+        'if_clicked': [
+            '1. Check final destination carefully',
+            '2. Look for SSL warnings',
+            '3. Close if asking for credentials',
+            '4. Report to shortening service',
+            '5. Clear browser data',
+            '6. If credentials entered: change passwords'
+        ]
+    },
+    
+    'FAKE_SECURITY_INDICATOR': {
+        'severity': 'MEDIUM',
+        'risk_score': 60,
+        'warning': '⚠️ Fake Security Term in Domain',
+        
+        'technical_details': {
+            'description': 'Domain contains security keywords (https, ssl, secure) to create false trust.',
+            'why_dangerous': 'Exploits trust in security terminology. "https" in name ≠ secure site.',
+            'common_targets': 'Security-conscious users, enterprise employees',
+            'attack_vector': 'Psychological manipulation using security terms.',
+            'prevalence': '10-15% of phishing attempts'
+        },
+        
+        'advice': [
+            '🔒 Check ACTUAL padlock icon in browser',
+            '🔍 Click padlock to view real SSL certificate',
+            '⚠️ "https" in domain name ≠ secure website',
+            '✅ Real security = valid SSL/TLS certificate',
+            '🚫 Legitimate sites don\'t need "secure" in domain'
+        ],
+        
+        'how_to_identify': [
+            'Contains: https-, ssl-, secure-, verify-',
+            'Examples: https-paypal.com, secure-banking.com',
+            'Often with brand names: secure-chase.com',
+            'May have valid HTTPS but wrong certificate'
+        ],
+        
+        'real_examples': [
+            'https-www-paypal-verify.com',
+            'secure-chase-online-banking.com',
+            'ssl-microsoft-account.net'
+        ],
+        
+        'prevention_techniques': [
+            'User education: "Security is in certificate, not name"',
+            'Browser extensions highlighting suspicious keywords',
+            'Email filtering for security term domains',
+            'Train users to check SSL indicators'
+        ],
+        
+        'if_clicked': [
+            '1. Click padlock to check certificate',
+            '2. Verify certificate organization',
+            '3. Check for "Not Secure" warnings',
+            '4. Close if certificate invalid',
+            '5. If credentials entered: change immediately'
+        ]
+    },
+    
+    'SOPHISTICATED_MULTI_VECTOR_ATTACK': {
+        'severity': 'CRITICAL',
+        'risk_score': 100,
+        'warning': '☢️ ADVANCED ATTACK - Maximum Threat',
+        
+        'technical_details': {
+            'description': 'Combines 3+ techniques simultaneously. Indicates professional, targeted campaign.',
+            'why_dangerous': 'Multiple techniques bypass layered defenses. Often APT or nation-state actors.',
+            'common_targets': 'C-suite, CFOs, admins, government officials',
+            'attack_vector': 'Layered deception with multiple evasion techniques.',
+            'prevalence': '<5% of attacks but 60%+ of successful breaches'
+        },
+        
+        'advice': [
+            '☢️ CRITICAL: Highly sophisticated attack',
+            '🚨 Disconnect from network immediately',
+            '📞 Contact IT security urgently',
+            '🛑 DO NOT interact with page',
+            '📸 Document everything',
+            '💼 May be targeted spear-phishing'
+        ],
+        
+        'how_to_identify': [
+            'Combines IP + brand impersonation',
+            'Uses shorteners + new domains',
+            'Multiple redirects + harvesting',
+            'High-quality site replicas',
+            'Personalized information'
+        ],
+        
+        'real_examples': [
+            'IP + brand + shortener combination',
+            'New TLD + brand + redirect chain',
+            'Spear-phishing with wire transfer requests'
+        ],
+        
+        'prevention_techniques': [
+            'Deploy AI-based email security',
+            'Implement zero-trust architecture',
+            'Use threat intelligence feeds',
+            'Enable MFA on ALL accounts',
+            'Deploy deception technology',
+            'Conduct executive security training'
+        ],
+        
+        'if_clicked': [
+            '⚠️ INCIDENT RESPONSE PROTOCOL:',
+            '1. ISOLATE: Disconnect from networks',
+            '2. PRESERVE: Screenshots, URLs, headers',
+            '3. REPORT: Incident response team immediately',
+            '4. DO NOT use device for other tasks',
+            '5. If credentials entered: Force reset from clean device',
+            '6. Follow breach notification procedures',
+            '7. Consider identity protection services'
+        ]
+    },
+    
+    'IFRAME_OVERLAY_PHISHING': {
+        'severity': 'HIGH',
+        'risk_score': 75,
+        'warning': '⚠️ Hidden iFrame Detected',
+        
+        'technical_details': {
+            'description': 'Uses invisible iFrames to overlay malicious forms on legitimate-looking pages.',
+            'why_dangerous': 'Users see trusted site but interact with attacker forms.',
+            'common_targets': 'Banking, email providers, social networks',
+            'attack_vector': 'Visual overlay with transparent iFrames.',
+            'prevalence': '5-8% of phishing attacks'
+        },
+        
+        'advice': [
+            '🔍 Inspect page source if suspicious',
+            '⚠️ Look for multiple scroll bars',
+            '🖱️ Try clicking around forms',
+            '🛠️ Use browser dev tools (F12)',
+            '⚙️ Password managers won\'t fill hidden forms'
+        ],
+        
+        'how_to_identify': [
+            'Right-click shows different menu',
+            'Page source reveals hidden iFrames',
+            'Login form doesn\'t match design',
+            'iFrames with opacity:0 or position:absolute'
+        ],
+        
+        'real_examples': [
+            'Fake PayPal overlay on blogs',
+            'Banking forms on news sites',
+            'Gmail lookalike overlays'
+        ],
+        
+        'prevention_techniques': [
+            'Browser extensions detecting hidden iFrames',
+            'Implement CSP headers',
+            'Deploy script analysis tools',
+            'Use password managers'
+        ],
+        
+        'if_clicked': [
+            '1. Check if credentials entered',
+            '2. If yes: change immediately',
+            '3. Clear all browser data',
+            '4. Run malware scan',
+            '5. Review browser extensions'
+        ]
+    },
+    
+    'OPEN_REDIRECT_PHISHING': {
+        'severity': 'MEDIUM',
+        'risk_score': 55,
+        'warning': '⚠️ Multiple Redirects Detected',
+        
+        'technical_details': {
+            'description': 'Abuses legitimate site redirects to hide final destination.',
+            'why_dangerous': 'Exploits trust in legitimate domains.',
+            'common_targets': 'Users of blogs, forums, compromised sites',
+            'attack_vector': 'Redirect chain obfuscation.',
+            'prevalence': '12-18% of campaigns'
+        },
+        
+        'advice': [
+            '🔍 Check final URL in address bar',
+            '⚠️ Legitimate redirects stay within organization',
+            '🚫 Be suspicious of different domains',
+            '📧 Look for ?redirect=, ?url= parameters'
+        ],
+        
+        'how_to_identify': [
+            'Parameters: ?redirect=, ?url=, ?next=',
+            'Multiple domain changes',
+            'Final domain unrelated to initial'
+        ],
+        
+        'real_examples': [
+            'blog.com/?redirect=phishing-site.com',
+            'forum.com/go/?url=malicious.com'
+        ],
+        
+        'prevention_techniques': [
+            'Implement strict redirect validation',
+            'Use whitelist for destinations',
+            'Deploy filters following chains',
+            'Regular security testing'
+        ],
+        
+        'if_clicked': [
+            '1. Note final destination',
+            '2. Close if suspicious',
+            '3. Report redirect to site security',
+            '4. Clear cookies from all domains'
+        ]
+    },
+    
+    'NEW_DOMAIN_PHISHING': {
+        'severity': 'MEDIUM',
+        'risk_score': 70,
+        'warning': '⚠️ Recently Registered Domain',
+        
+        'technical_details': {
+            'description': 'Domain registered very recently (< 6 months).',
+            'why_dangerous': 'Indicates disposable infrastructure.',
+            'common_targets': 'Time-sensitive scams, holiday phishing',
+            'attack_vector': 'Rapid deployment and abandonment.',
+            'prevalence': '70-80% of phishing uses new domains'
+        },
+        
+        'advice': [
+            '⚠️ New domains need extra verification',
+            '📞 Verify through alternative methods',
+            '🔍 Check for reviews and social presence',
+            '💼 Look for established business info'
+        ],
+        
+        'how_to_identify': [
+            'Domain age tools show recent creation',
+            'No web archive history',
+            'Limited search results',
+            'No social media presence'
+        ],
+        
+        'real_examples': [
+            'Domain registered yesterday for tax scams',
+            'Holiday shopping scam sites',
+            'Fake COVID relief domains'
+        ],
+        
+        'prevention_techniques': [
+            'Block domains under 30 days old',
+            'Use reputation services with age weighting',
+            'Train users about domain age',
+            'Monitor similar registrations to your brand'
+        ],
+        
+        'if_clicked': [
+            '1. Verify through independent sources',
+            '2. Check HTTPS and SSL',
+            '3. Look for contact info',
+            '4. If uncertain, avoid interaction'
+        ]
+    },
+    
+    'SOCIAL_ENGINEERING_PHISHING': {
+        'severity': 'MEDIUM',
+        'risk_score': 50,
+        'warning': '⚠️ Page Manipulation Detected',
+        
+        'technical_details': {
+            'description': 'Uses JavaScript tricks to manipulate behavior.',
+            'why_dangerous': 'Psychological manipulation bypasses technical defenses.',
+            'common_targets': 'All users, especially less tech-savvy',
+            'attack_vector': 'UI/UX deception.',
+            'prevalence': 'Very common in scam sites'
+        },
+        
+        'advice': [
+            'Use keyboard shortcuts (Ctrl+W)',
+            'Be suspicious of countdown timers',
+            'Never bypass browser warnings',
+            'Trust your instincts'
+        ],
+        
+        'how_to_identify': [
+            'Right-click disabled',
+            'Address bar hidden',
+            'Fake security warnings',
+            'Countdown timers',
+            'Mouse trapping'
+        ],
+        
+        'real_examples': [
+            'Fake virus scans',
+            'Countdown timer offers',
+            'Pages that prevent leaving'
+        ],
+        
+        'prevention_techniques': [
+            'Use browser security extensions',
+            'Disable JavaScript for unknown sites',
+            'Train on social engineering tactics',
+            'Use isolated browsing'
+        ],
+        
+        'if_clicked': [
+            '1. Force close browser',
+            '2. Use Task Manager if unresponsive',
+            '3. Clear browser data',
+            '4. Report to security teams'
+        ]
+    },
+    
+    'GENERAL_PHISHING': {
+        'severity': 'MEDIUM',
+        'risk_score': 50,
+        'warning': '⚠️ Phishing Characteristics Detected',
+        
+        'technical_details': {
+            'description': 'Exhibits phishing characteristics but doesn\'t match specific patterns.',
+            'why_dangerous': 'May be evolving attack methods.',
+            'common_targets': 'General population',
+            'attack_vector': 'Various techniques.',
+            'prevalence': 'Common'
+        },
+        
+        'advice': [
+            'Exercise caution',
+            'Verify through independent channels',
+            'Check sender legitimacy',
+            'Look for errors and poor design'
+        ],
+        
+        'how_to_identify': [
+            'ML model flags as suspicious',
+            'Multiple minor characteristics',
+            'Patterns similar to known phishing'
+        ],
+        
+        'real_examples': [
+            'Evolving phishing techniques',
+            'Less common brand impersonations'
+        ],
+        
+        'prevention_techniques': [
+            'Layered security defenses',
+            'Behavior-based detection',
+            'Regular ML model updates',
+            'Continuous training'
+        ],
+        
+        'if_clicked': [
+            '1. Assess page carefully',
+            '2. Look for trust indicators',
+            '3. Verify with known sources',
+            '4. Report false positives'
+        ]
+    },
+    
+    'LEGITIMATE': {
+        'severity': 'LOW',
+        'risk_score': 0,
+        'warning': '✅ Site Appears Safe',
+        
+        'technical_details': {
+            'description': 'URL passes security checks with no phishing indicators.',
+            'why_safe': 'Proper registration, established reputation, valid certificates.',
+            'verification_method': 'Multi-factor analysis.'
+        },
+        
+        'advice': [
+            'This URL appears legitimate',
+            'Continue to verify correct site',
+            'Look for HTTPS and valid certificates',
+            'Even legitimate sites can be compromised'
+        ],
+        
+        'how_to_identify': [
+            'Established domain (> 6 months)',
+            'Valid SSL from trusted CA',
+            'Consistent branding',
+            'Clear contact information',
+            'Positive reputation'
+        ],
+        
+        'best_practices': [
+            'Enable two-factor authentication',
+            'Use password managers',
+            'Keep software updated',
+            'Review account activity regularly',
+            'Use official apps'
+        ]
+    }
+}
+
+
+# ===============================
+# RISK SCORING & CONTENT
+# ===============================
+
+def calculate_risk_score(features, attack_types):
+    """Calculate risk score (0-100)"""
+    base_score = 0
+    
+    for attack in attack_types:
+        info = ENHANCED_PREVENTION.get(attack, ENHANCED_PREVENTION['GENERAL_PHISHING'])
+        base_score = max(base_score, info.get('risk_score', 50))
+    
+    return int(base_score)
+
 
 def generate_educational_content(attack_types, features):
-    """
-    Generate comprehensive educational content about the detected threat.
-    """
-    educational_content = {
-        'threat_overview': {},
-        'how_it_works': [],
-        'why_dangerous': [],
-        'identification_tips': [],
-        'real_world_examples': [],
-        'prevention_steps': [],
-        'incident_response': [],
-        'further_reading': []
+    """Generate educational content"""
+    primary_attack = attack_types[0] if attack_types else "GENERAL_PHISHING"
+    info = ENHANCED_PREVENTION.get(primary_attack, ENHANCED_PREVENTION['GENERAL_PHISHING'])
+    
+    return {
+        'threat_overview': {
+            'attack_type': primary_attack.replace('_', ' ').title(),
+            'description': info.get('technical_details', {}).get('description', ''),
+            'severity': info.get('severity', 'MEDIUM')
+        },
+        'identification_tips': info.get('how_to_identify', []),
+        'real_world_examples': info.get('real_examples', []),
+        'prevention_steps': info.get('prevention_techniques', []),
+        'incident_response': info.get('if_clicked', [])
     }
-    
-    for attack in attack_types:
-        info = ENHANCED_PREVENTION.get(attack, {})
-        tech_details = info.get('technical_details', {})
-        
-        if tech_details:
-            educational_content['threat_overview'] = {
-                'attack_type': attack.replace('_', ' ').title(),
-                'description': tech_details.get('description', ''),
-                'severity': info.get('severity', 'MEDIUM'),
-                'risk_score': info.get('risk_score', 50)
-            }
-            
-            educational_content['how_it_works'].append({
-                'attack_vector': tech_details.get('attack_vector', ''),
-                'common_targets': tech_details.get('common_targets', [])
-            })
-            
-            educational_content['why_dangerous'].append(
-                tech_details.get('why_dangerous', '')
-            )
-        
-        educational_content['identification_tips'].extend(
-            info.get('how_to_identify', [])
-        )
-        
-        educational_content['real_world_examples'].extend(
-            info.get('real_examples', [])
-        )
-        
-        educational_content['prevention_steps'].extend(
-            info.get('prevention_techniques', [])
-        )
-        
-        educational_content['incident_response'].extend(
-            info.get('if_clicked', [])
-        )
-    
-    # Add general resources
-    educational_content['further_reading'] = [
-        'NIST Phishing Prevention Guidelines',
-        'CISA Cybersecurity Awareness',
-        'Anti-Phishing Working Group (APWG)',
-        'Google Safe Browsing Transparency Report',
-        'Microsoft Security Intelligence'
-    ]
-    
-    return educational_content
 
 
 # ===============================
-# ENHANCED ANALYSIS FUNCTION
+# MAIN ANALYSIS FUNCTION
 # ===============================
 
-def analyze_phishing_attack(features, prediction, confidence):
+# ===============================
+# MAIN ANALYSIS FUNCTION (FIXED)
+# ===============================
+
+def analyze_phishing_attack(features, prediction, confidence, url=None):
     """
-    Complete enhanced analysis with educational content.
+    Complete hybrid analysis with Shortener Persistence.
+    🚀 FIXED: Intercepts and forces phishing for shorteners even if ML is tricked.
     """
-    attack_types = classify_attack_type(features) if prediction == 1 else ["LEGITIMATE"]
+    # 1. Feature mapping
+    feature_dict = dict(zip(feature_names, features))
     
-    # Get basic prevention info
-    prevention_info = {}
-    for attack in attack_types:
-        info = ENHANCED_PREVENTION.get(attack, {})
-        prevention_info = {
+    # 🚀 STEP 1: HYBRID OVERRIDE
+    # Check if the shortener bit is active (Flagged by original URL in app.py)
+    is_shortener = feature_dict.get('TinyURL', 0) == 1
+
+    if is_shortener:
+        # If it was a shortener, we Categorize it as Phishing regardless of ML result
+        prediction = 1
+        attack_types = ['URL_SHORTENER_PHISHING']
+        # We use the ML confidence from the expanded URL, but label it correctly
+        final_confidence = confidence 
+    else:
+        # Standard logic: Use ML prediction to decide if we classify an attack
+        attack_types = classify_attack_type(features, url) if prediction == 1 else ["LEGITIMATE"]
+        final_confidence = confidence
+    
+    primary_attack = attack_types[0]
+    info = ENHANCED_PREVENTION.get(primary_attack, ENHANCED_PREVENTION['GENERAL_PHISHING'])
+    
+    # 2. Calculate risk
+    risk_score = calculate_risk_score(features, attack_types)
+    
+    # 3. Generate content
+    educational_content = generate_educational_content(attack_types, features)
+    
+    # 4. Filter features for frontend
+    detected_features = {k: bool(v) for k, v in feature_dict.items() if v == 1}
+
+    return {
+        "prediction": "phishing" if prediction == 1 else "legitimate",
+        "confidence": final_confidence, # 🚀 Real variable score from expanded destination
+        "attack_types": attack_types,
+        "risk_score": risk_score,
+        "prevention": {
             "severity": info.get('severity', 'MEDIUM'),
-            "risk_score": info.get('risk_score', 50),
+            "risk_score": risk_score,
             "warnings": [info.get('warning', '')],
             "advice": info.get('advice', []),
             "technical_details": info.get('technical_details', {}),
-            "how_to_identify": info.get('how_to_identify', []),
-            "real_examples": info.get('real_examples', []),
-            "prevention_techniques": info.get('prevention_techniques', []),
             "if_clicked": info.get('if_clicked', [])
-        }
-    
-    # Calculate risk score
-    risk_score = calculate_risk_score(features, attack_types)
-    
-    # Generate educational content
-    educational_content = generate_educational_content(attack_types, features)
-    
-    return {
-        "prediction": "phishing" if prediction == 1 else "legitimate",
-        "confidence": confidence,
-        "attack_types": attack_types,
-        "risk_score": risk_score,
-        "prevention": prevention_info,
+        },
         "educational_content": educational_content,
         "timestamp": datetime.utcnow().isoformat(),
-        "features_detected": dict(zip(feature_names, features))
+        "features": detected_features
     }

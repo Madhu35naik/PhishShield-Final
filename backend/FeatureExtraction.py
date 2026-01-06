@@ -19,6 +19,15 @@ socket.setdefaulttimeout(3)  # Reduced from 5 to 3 seconds
 # ===============================
 # Helper Functions
 # ===============================
+def get_expanded_url(url):
+    """🚀 NEW: Follows short links to find the real target destination."""
+    try:
+        # Use allow_redirects=True to follow bit.ly/tinyurl to the end
+        response = requests.head(url, allow_redirects=True, timeout=3, verify=False)
+        return response.url
+    except:
+        return url  # If it fails, return the original short URL
+    
 def havingIP(url):
     try:
         ipaddress.ip_address(urlparse(url).netloc)
@@ -50,17 +59,40 @@ def httpsDomain(url):
     return 0
 
 def tinyURL(url):
-    pattern = re.compile(
-        r"bit\.ly|goo\.gl|shorte\.st|go2l\.ink|x\.co|ow\.ly|t\.co|tinyurl|tr\.im|is\.gd|cli\.gs|" \
-                      r"yfrog\.com|migre\.me|ff\.im|tiny\.cc|url4\.eu|twit\.ac|su\.pr|twurl\.nl|snipurl\.com|" \
-                      r"short\.to|BudURL\.com|ping\.fm|post\.ly|Just\.as|bkite\.com|snipr\.com|fic\.kr|loopt\.us|" \
-                      r"doiop\.com|short\.ie|kl\.am|wp\.me|rubyurl\.com|om\.ly|to\.ly|bit\.do|t\.co|lnkd\.in|db\.tt|" \
-                      r"qr\.ae|adf\.ly|goo\.gl|bitly\.com|cur\.lv|tinyurl\.com|ow\.ly|bit\.ly|ity\.im|q\.gs|is\.gd|" \
-                      r"po\.st|bc\.vc|twitthis\.com|u\.to|j\.mp|buzurl\.com|cutt\.us|u\.bb|yourls\.org|x\.co|" \
-                      r"prettylinkpro\.com|scrnch\.me|filoops\.info|vzturl\.com|qr\.net|1url\.com|tweez\.me|v\.gd|" \
-                      r"tr\.im|link\.zip\.net"
-    )
-    return 1 if re.search(pattern, url) else 0
+    """
+    FIXED: Uses a comprehensive list and precise domain parsing
+    to detect URL shorteners.
+    """
+    # 1. Comprehensive list of common and obscure shorteners
+    shorteners = [
+        'bit.ly', 'tinyurl.com', 'goo.gl', 't.co', 'buff.ly', 'is.gd', 'ow.ly', 
+        'bit.do', 'adf.ly', 'bitly.com', 'cur.lv', 'ity.im', 'q.gs', 'po.st', 
+        'bc.vc', 'twitthis.com', 'u.to', 'j.mp', 'buzurl.com', 'cutt.us', 
+        'u.bb', 'yourls.org', 'x.co', 'prettylinkpro.com', 'scrnch.me', 
+        'filoops.info', 'vzturl.com', 'qr.net', '1url.com', 'tweez.me', 
+        'v.gd', 'tr.im', 'link.zipo.it', 'shorte.st', 'go2l.ink', 'rebrandly.com'
+    ]
+    
+    try:
+        # 2. Parse the domain (e.g., 'https://bit.ly/3x' -> 'bit.ly')
+        parsed_url = urlparse(url.lower())
+        domain = parsed_url.netloc.replace('www.', '')
+        
+        # 3. Handle cases where the port might be included (e.g., bit.ly:80)
+        domain = domain.split(':')[0]
+        
+        # 4. Check if the domain is in our list
+        if domain in shorteners:
+            return 1
+            
+        # 5. Backup check: if the domain itself is very short (common in custom shorteners)
+        # e.g., t.co, x.co, wp.me
+        if len(domain) <= 6 and domain.count('.') == 1:
+             return 1
+
+        return 0
+    except:
+        return 1 # If parsing fails, assume suspicious
 
 def prefixSuffix(url):
     return 1 if '-' in urlparse(url).netloc else 0
