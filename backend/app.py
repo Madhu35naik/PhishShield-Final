@@ -104,7 +104,7 @@ try:
         model = model_data
         model_name = type(model).__name__
 
-    print(f"✅ ML Model loaded successfully: {model_name}")
+    print(f"✅ ML Model loaded successfully:XGBoost")
 
 except Exception as e:
     print("❌ ML model loading failed:", e)
@@ -180,7 +180,7 @@ def scan_url(current_user):
             model.predict_proba(features_np)[0][pred] * 100
         )
 
-        result = analyze_phishing_attack(features, pred, confidence)
+        result = analyze_phishing_attack(features, pred, confidence, url=clean_url)
 
         response = {
             "url": clean_url,
@@ -202,6 +202,58 @@ def scan_url(current_user):
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+    
+# ============================================================
+# EXTENSION SCAN API (NO AUTH REQUIRED)
+# ============================================================
+
+@app.route("/api/extension/scan", methods=["POST"])
+def extension_scan():
+    if model is None:
+        return jsonify({"error": "ML model not available"}), 500
+
+    try:
+        data = request.get_json(force=True)
+        url = data.get("url")
+
+        # Validate URL
+        is_valid, clean_url = validate_url(url)
+        if not is_valid:
+            return jsonify({"error": clean_url}), 400
+
+        # Feature Extraction
+        features = featureExtraction(clean_url, None)
+        features_np = np.array(features).reshape(1, -1)
+
+        # ML Prediction
+        pred = int(model.predict(features_np)[0])
+        confidence = float(
+            model.predict_proba(features_np)[0][pred] * 100
+        )
+
+        # Attack Analysis
+        result = analyze_phishing_attack(
+            features, pred, confidence, url=clean_url
+        )
+
+        # ✅ NO LOGGING
+        # ✅ NO USER
+        # ✅ EXTENSION SAFE RESPONSE
+        return jsonify({
+            "prediction": result["prediction"],
+            "confidence": result["confidence"],
+            "risk_score": calculate_risk_score(
+                features,
+                result["attack_types"]
+            ),
+            "attack_types": result["attack_types"],
+            "prevention": result["prevention"]
+        })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 
 # ============================================================
 # BATCH SCAN API (ML ONLY) - FIXED VERSION

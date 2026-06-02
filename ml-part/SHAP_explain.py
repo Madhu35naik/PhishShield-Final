@@ -1,13 +1,19 @@
 import pandas as pd
 import joblib
 import shap
+import os
 import matplotlib.pyplot as plt
 
 # -----------------------
 # Load model + dataset
 # -----------------------
-model = joblib.load("phishing_Model.pkl")["model"]  # <── FIXED LINE
-df = pd.read_csv("data/6.FinalDataset.csv")
+BASE_DIR = os.path.dirname(__file__)
+model_path = os.path.join(BASE_DIR, "phishing_model.pkl")
+
+model = joblib.load(model_path)
+data_path = os.path.join(BASE_DIR, "..", "data", "6.FinalDataset.csv")
+
+df = pd.read_csv(data_path)
 
 X = df.iloc[:, :-1]   # feature columns only
 

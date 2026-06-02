@@ -1,51 +1,109 @@
-<!-- popup.html -->
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
+
     <style>
+        /* ===== DESIGN VARIABLES ===== */
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --bg-gray: #F9FAFB;
+            --text-main: #111827;
+            --text-sub: #6B7280;
+            --border: #E5E7EB;
+            --safe-bg: #DCFCE7;
+            --safe-text: #166534;
+            --danger-bg: #FEE2E2;
+            --danger-text: #991B1B;
+        }
+
         body {
-            width: 400px;
-            min-height: 500px;
-            font-family: system-ui;
+            width: 380px;
+            min-height: 480px;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             margin: 0;
-            padding: 0;
+            background: var(--bg-gray);
+            color: var(--text-main);
         }
-        
+
+        /* ===== HEADER ===== */
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
             color: white;
-            padding: 24px;
+            padding: 20px;
             text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
-        
+
         .logo {
-            font-size: 48px;
-            margin-bottom: 8px;
+            font-size: 32px;
+            margin-bottom: 4px;
         }
-        
+
         .title {
-            font-size: 20px;
-            font-weight: 600;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.025em;
         }
-        
-        .status {
-            margin: 20px;
+
+        /* ===== CONTENT AREA ===== */
+        #content {
             padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* ===== BENTO CARDS ===== */
+        .bento-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* ===== STATUS BADGES ===== */
+        .status-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 700;
+            padding: 10px;
             border-radius: 8px;
-            text-align: center;
+            font-size: 14px;
+            margin-bottom: 12px;
         }
-        
-        .status.safe {
-            background: #ECFDF5;
-            border: 2px solid #059669;
+
+        .status-badge.safe {
+            background: var(--safe-bg);
+            color: var(--safe-text);
         }
-        
-        .status.danger {
-            background: #FEE2E2;
-            border: 2px solid #DC2626;
+
+        .status-badge.danger {
+            background: var(--danger-bg);
+            color: var(--danger-text);
         }
-        
+
+        /* ===== INFO TEXT ===== */
+        .info-label {
+            font-size: 11px;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-size: 13px;
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        /* ===== BUTTONS ===== */
         .button {
             width: 100%;
             padding: 12px;
@@ -54,26 +112,59 @@
             cursor: pointer;
             font-size: 14px;
             font-weight: 600;
-            margin-bottom: 8px;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
         }
-        
+
         .button.primary {
-            background: #667eea;
+            background: var(--primary);
             color: white;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+        }
+
+        .button.primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .button.secondary {
+            background: transparent;
+            color: var(--text-sub);
+            border: 1px solid var(--border);
+            margin-top: 8px;
+        }
+
+        .button.secondary:hover {
+            background: #F3F4F6;
+            color: var(--text-main);
+        }
+
+        /* ===== SCANNING ANIMATION ===== */
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .scanning-icon {
+            animation: pulse 1.5s infinite;
         }
     </style>
 </head>
+
 <body>
+
+    <!-- Header (Kept ✅) -->
     <div class="header">
         <div class="logo">🛡️</div>
         <div class="title">PhishShield</div>
-        <div style="font-size: 12px; opacity: 0.9;">Real-Time Protection Active</div>
     </div>
-    
-    <div id="content">
-        <!-- Dynamically populated by popup.js -->
-    </div>
-    
+
+    <!-- Dynamic Content Container (Kept ✅) -->
+    <div id="content"></div>
+
+    <!-- Popup Logic -->
     <script src="popup.js"></script>
+
 </body>
 </html>

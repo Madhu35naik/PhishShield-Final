@@ -3,7 +3,6 @@
   "name": "PhishShield - Real-Time Phishing Protection",
   "version": "1.0.0",
   "description": "AI-powered phishing detection that protects you in real-time",
-  
   "permissions": [
     "activeTab",
     "storage",
@@ -11,23 +10,21 @@
     "webNavigation",
     "tabs"
   ],
-  
   "host_permissions": [
     "http://localhost:5000/*",
     "<all_urls>"
   ],
-  
   "background": {
     "service_worker": "background.js"
   },
-  
-  "content_scripts": [{
-    "matches": ["<all_urls>"],
-    "js": ["content.js"],
-    "css": ["warning.css"],
-    "run_at": "document_start"
-  }],
-  
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["warning.css"],
+      "run_at": "document_start"
+    }
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -35,10 +32,10 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
-},
-"icons": {
+  },
+  "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-}
+  }
 }

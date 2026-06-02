@@ -1,8 +1,15 @@
-# config.py
+# utils/config.py
 
-MONGO_URI = "mongodb+srv://madhura:Madhura123@cluster0.ikzrg9b.mongodb.net/?appName=Cluster0"
-# Change this to your MongoDB connection string if different
+from dotenv import load_dotenv
+import os
+from pathlib import Path
 
+# Load .env from project root
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
+
+# MongoDB settings
+MONGO_URI = os.getenv("MONGO_URI")
 MONGO_DATABASE_NAME = "PhishingDB"
 MONGO_COLLECTION_NAME = "scan_logs" 
 
